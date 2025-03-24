@@ -143,8 +143,11 @@ def m(name):
 
 def log_push_event_csv(subject, receivers, error_message=None):
     # 北京时间
-    now_bj = datetime.utcnow() + timedelta(hours=8)
-    timestamp = now_bj.strftime("%Y-%m-%d %H:%M:%S")
+    # 先获取 UTC 时间（有时区意识的）
+    utc_now = datetime.now(timezone.utc)
+    # 转为北京时间（UTC+8）
+    bj_now = utc_now.astimezone(timezone(timedelta(hours=8)))
+    timestamp = bj_now.strftime("%Y-%m-%d %H:%M:%S")
 
     log_path = "push_log.csv"
     new_rows = []
