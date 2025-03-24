@@ -148,3 +148,4 @@ for j in range(len(renew_list2)):
     fetch_and_export_stock_data2(renew_list2["url"][j], stock_name)
 
 print("搞掂！")
+raise Exception("测试错误")

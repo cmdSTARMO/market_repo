@@ -4,7 +4,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.header import Header
 from email.utils import formataddr
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 import base64
 import pandas as pd
 import requests as rq
@@ -25,10 +25,14 @@ testt = str(f"""<span class="red" style="color:#ff0000;">下跌了0.9%</span>"""
 # 封装读取日期并生成邮件主题的函数
 def generate_subject():
     # GitHub Actions 是 UTC 时间，这里手动加8小时变成北京时间
-    now_bj = datetime.utcnow() + timedelta(hours=8)
-    current_date = now_bj.strftime("%Y-%m-%d")
-    current_hour = now_bj.hour
-    current_minute = now_bj.minute
+
+    # 先获取 UTC 时间（有时区意识的）
+    utc_now = datetime.now(timezone.utc)
+    # 转为北京时间（UTC+8）
+    bj_now = utc_now.astimezone(timezone(timedelta(hours=8)))
+    current_date = bj_now.strftime("%Y-%m-%d")
+    current_hour = bj_now.hour
+    current_minute = bj_now.minute
 
     # 简单逻辑判断，如果早于中午 12 点，就认为是“开盘速报”，否则是“收盘速报”
     if current_hour < 12:
