@@ -2,7 +2,7 @@ name: Workday Twice Daily Auto Run
 
 on:
   schedule:
-    - cron: '35 1 * * 1-5'  # 北京时间 09:35
+    - cron: '40 4 * * 1-5'  # 北京时间 09:35 - 8
     - cron: '0 7 * * 1-5'   # 北京时间 15:01
   workflow_dispatch:
 
