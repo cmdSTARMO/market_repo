@@ -14,7 +14,7 @@ import csv
 from notify_util import FeishuBot
 
 # 获取当前时间
-current_time = datetime.now()
+current_time = datetime.now().astimezone(timezone(timedelta(hours=8)))
 
 # 格式化为 "YYYYMMDDHHMMSS"
 formatted_time = current_time.strftime("%Y%m%d%H%M%S")
