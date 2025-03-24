@@ -35,7 +35,7 @@ jobs:
           echo "daat.py failed after retries"
           curl -X POST -H "Content-Type: application/json" \
             -d '{"text": "⚠️ GitHub Actions 警告：daat.py 执行失败（3次重试后）"}' \
-            https://your.webhook.url
+            https://open.feishu.cn/open-apis/bot/v2/hook/f129a3a4-9860-4917-9b14-5e63f9bf8e98
         fi
       continue-on-error: true
 
@@ -51,6 +51,6 @@ jobs:
           echo "push.py failed after retries"
           curl -X POST -H "Content-Type: application/json" \
             -d '{"text": "⚠️ GitHub Actions 警告：push.py 执行失败（3次重试后）"}' \
-            https://your.webhook.url
+            https://open.feishu.cn/open-apis/bot/v2/hook/f129a3a4-9860-4917-9b14-5e63f9bf8e98
         fi
       continue-on-error: true
