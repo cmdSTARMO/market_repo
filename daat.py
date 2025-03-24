@@ -7,8 +7,33 @@ import csv
 from datetime import datetime
 import re
 import pandas as pd
+import time
+
 
 print(1)
+start_time = time.time()
+
+class FeishuTalk:
+
+    # 机器人webhook
+    hdpbot_url = 'https://open.feishu.cn/open-apis/bot/v2/hook/f129a3a4-9860-4917-9b14-5e63f9bf8e98'
+
+    # 发送文本消息
+    def sendTextmessage(self, content):
+        url = self.hdpbot_url
+        headers = {
+            "Content-Type": "application/json; charset=utf-8",
+        }
+        payload_message = {
+            "msg_type": "text",
+            "content": {
+            	# @ 单个用户 <at user_id="ou_xxx">名字</at>
+                "text": content # + "<at user_id=\"bf888888\">test</at>" #+ "<at user_id=\"bf888888\">test</at>"
+            }
+        }
+        response = requests.post(url=url, data=json.dumps(payload_message), headers=headers)
+        return response.json
+
 def fetch_and_export_stock_data1(url, stock_names):
     try:
 
@@ -139,6 +164,10 @@ def fetch_and_export_stock_data2(url, stock_names):
         raise  # 向外抛出异常
 
 print(1)
+
+FeishuTalk().sendTextmessage(
+    f"开始更新数据啦 <at user_id=\"94dae5e3\">test</at>")
+
 renew_list1 = pd.read_excel("data_renew_method_1.xlsx", dtype={"code": str})
 for i in range(len(renew_list1)):
     print(i)
@@ -151,4 +180,10 @@ for j in range(len(renew_list2)):
     fetch_and_export_stock_data2(renew_list2["url"][j], stock_name)
 
 print("搞掂！")
-raise Exception("测试错误")
+# 记录结束时间并计算运行时长
+end_time = time.time()
+duration = round(end_time - start_time, 2)
+# 发送完成消息
+FeishuTalk().sendTextmessage(
+    f"今日市场数据已更新完毕！本次更新耗时 {int(duration//60)} 分 {round(duration%60, 2)} 秒" + " <at user_id=\"94dae5e3\">test</at>")
+# raise Exception("测试错误")
