@@ -4,11 +4,14 @@ import smtplib
 from email.mime.text import MIMEText
 from email.header import Header
 from email.utils import formataddr
-from datetime import datetime
+from datetime import datetime, timedelta
 import base64
 import pandas as pd
 import requests as rq
 import re
+import os
+import csv
+from notify_util import FeishuBot
 
 # 获取当前时间
 current_time = datetime.now()
@@ -21,8 +24,19 @@ testt = str(f"""<span class="red" style="color:#ff0000;">下跌了0.9%</span>"""
 
 # 封装读取日期并生成邮件主题的函数
 def generate_subject():
-    current_date = datetime.now().strftime("%Y-%m-%d")
-    return f'{current_date} 开盘速报'
+    # GitHub Actions 是 UTC 时间，这里手动加8小时变成北京时间
+    now_bj = datetime.utcnow() + timedelta(hours=8)
+    current_date = now_bj.strftime("%Y-%m-%d")
+    current_hour = now_bj.hour
+    current_minute = now_bj.minute
+
+    # 简单逻辑判断，如果早于中午 12 点，就认为是“开盘速报”，否则是“收盘速报”
+    if current_hour < 12:
+        report_type = "开盘速报"
+    else:
+        report_type = "收盘速报"
+
+    return f'{current_date} {report_type}'
 
 
 # 对昵称进行 base64 编码
@@ -102,7 +116,7 @@ def m(name):
         if float(today_info_rate.rstrip('%')) < 0:
             today_info_rate_output = f"""<span class="green">{today_info_rate}</span>"""
         elif float(today_info_rate.rstrip('%')) > 0:
-            today_info_rate_output = f"""<span class="red"  >{today_info_rate}</span>"""
+            today_info_rate_output = f"""<span class="red"  >+{today_info_rate}</span>"""
         else:
             today_info_rate_output = "持平"
     elif judge_xls.loc[index, '爬取方式'] == 2:
@@ -123,6 +137,34 @@ def m(name):
     # print(output)
     return output
 
+def log_push_event_csv(subject, receivers, error_message=None):
+    # 北京时间
+    now_bj = datetime.utcnow() + timedelta(hours=8)
+    timestamp = now_bj.strftime("%Y-%m-%d %H:%M:%S")
+
+    log_path = "push_log.csv"
+    new_rows = []
+
+    for receiver in receivers:
+        new_rows.append([timestamp, receiver, subject, error_message or "None"])
+
+    # 如果文件不存在，先写入表头
+    file_exists = os.path.exists(log_path)
+
+    # 读取旧数据（为了把新记录放在前面）
+    existing_rows = []
+    if file_exists:
+        with open(log_path, "r", encoding="utf-8", newline='') as csvfile:
+            reader = list(csv.reader(csvfile))
+            if reader:
+                existing_rows = reader[1:]  # 跳过表头
+
+    # 写入新日志（新记录在上面）
+    with open(log_path, "w", encoding="utf-8", newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(["时间（北京时间）", "接收人", "标题", "错误状态"])
+        writer.writerows(new_rows + existing_rows)
+
 
 if __name__ == "__main__":
     # 用户输入
@@ -138,10 +180,40 @@ if __name__ == "__main__":
     # 邮件内容
     styles = """    
     <style>
-        .red { color: #ff0000; }
-        .green { color: #008000; }
-        .email-body { font-size: 12px; line-height: 1.5; color: #050505; }
-    </style>"""
+        :root {
+            color-scheme: light only;
+        }
+
+        body {
+            background-color: #000001 !important;
+            color: #fefefe !important;
+        }
+
+        .email-body {
+            font-size: 12px;
+            line-height: 1.5;
+            color: #fefefe !important;
+            background-color: #000001 !important;
+        }
+
+        .red {
+            color: #ff1a1a !important;
+        }
+
+        .green {
+            color: #00b300 !important;
+        }
+
+        .main-table,
+        .card-content,
+        .title,
+        .header,
+        .content-section {
+            background-color: #000001 !important;
+            color: #fefefe !important;
+        }
+    </style>
+    """
 
     mail_msg = f"""
     <!DOCTYPE html>
@@ -151,13 +223,13 @@ if __name__ == "__main__":
         <title>Market Update</title>
         {styles}
     </head>
-    <body>
+    <body style="background-color:#000001 !important; color:#fefefe !important;">
         <center>
             <table class="main-table" style="width:690px;border-spacing:0;border-collapse:collapse;">
                 <tbody>
                     <!-- Header Section -->
                     <tr>
-                        <td style="text-align:center; background:#000000;">
+                        <td style="text-align:center; background:#000001 !important;">
                             <div style="display:inline-block; width:100%;">
                                 <img style="max-width:100%; width:100%; height:auto;" src="https://huangdapao.com/images/header_of_email.png" alt="Header Image">
                             </div>
@@ -166,8 +238,8 @@ if __name__ == "__main__":
 
                     <!-- Content Section -->
                     <tr>
-                        <td colspan="2" style="background:#000000;">
-                            <div class="content-outer" style="background:#000000; border-radius:4px; max-width:600px; margin:0 auto; border:2px solid #333333;">
+                        <td colspan="2" style="background:#000001 !important;">
+                            <div class="content-outer" style="background:#000001 !important; border-radius:4px; max-width:600px; margin:0 auto; border:2px solid #333333;">
                                 <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%; border-radius:4px;">
                                     <tbody>
                                         <tr><td height="30" style="height:30px;"></td></tr>
@@ -342,15 +414,15 @@ if __name__ == "__main__":
 
                     <!-- Footer Section -->
                     <tr>
-                        <td class="mail-footer" colspan="2" style="padding:25px; font-family:Arial; font-weight:normal; line-height:21px; font-size:14px; background-color:#000000; color:#000000;">
+                        <td class="mail-footer" colspan="2" style="padding:25px; font-family:Arial; font-weight:normal; line-height:21px; font-size:14px; background-color:#000001 !important; color:#fefefe !important;">
                             <div style="display:inline-block; width:100%;">
                                 <img style="margin-bottom:10px; max-width:100%; width:100%; height:auto;" src="https://huangdapao.com/images/end_of_email_logo.png" alt="Footer Image">
                             </div>
                             <center>
-                                <span style="color:#FFF;">您会收到这封邮件是因为您订阅了曲径共融的邮件推送。</span><br>
-                                <span style="color:#FFF;">You are receiving this email because you have subscribed to Curveway Confluence email notifications.</span><br><br>
-                                <span style="color:#FFF;">本邮件由曲径共融（广州）大数据投资中心数据部与信息部共同制作推送。</span><br>
-                                <span style="color:#FFF;">This email is jointly generated and sent by the Data Dep. and the IT Dep. of Curveway Confluence (Guangzhou) Big Data Investment Center.</span><br>
+                                <span style="color:#888888;">您会收到这封邮件是因为您订阅了曲径共融的邮件推送。</span><br>
+                                <span style="color:#888888;">You are receiving this email because you have subscribed to Curveway Confluence email notifications.</span><br><br>
+                                <span style="color:#888888;">本邮件由曲径共融（广州）大数据投资中心数据部与信息部共同制作推送。</span><br>
+                                <span style="color:#888888;">This email is jointly generated and sent by the Data Dep. and the IT Dep. of Curveway Confluence (Guangzhou) Big Data Investment Center.</span><br>
                             </center>
                         </td>
                     </tr>
@@ -366,6 +438,27 @@ if __name__ == "__main__":
     subject = generate_subject()
 
     message = create_email_content(mail_msg, subject, sender_nickname, sender_email, receiver_nickname, receiver_email)
-    receivers = ['1624070280@qq.com', 'heli2002@163.com', 'xin.jackhuang@gmail.com', 'huangdapao@huangdapao.com' , '2248362474@qq.com', '344621206@qq.com', '484420009@qq.com', '980364480@qq.com', '1097442370@qq.com', 'solid_b1n@qq.com', "944240869@qq.com", '2366965809@qq.com']  # 可以包含多个接收者邮箱地址 'solid_b1n@qq.com', "yfchan484420009@163.com", "944240869@qq.com"
+    receivers = ['1624070280@qq.com'] #, 'heli2002@163.com', 'xin.jackhuang@gmail.com', 'huangdapao@huangdapao.com' , '2248362474@qq.com', '344621206@qq.com', '484420009@qq.com', '980364480@qq.com', '1097442370@qq.com', 'solid_b1n@qq.com', "944240869@qq.com", '2366965809@qq.com']  # 可以包含多个接收者邮箱地址 'solid_b1n@qq.com', "yfchan484420009@163.com", "944240869@qq.com"
+    bot = FeishuBot("https://open.feishu.cn/open-apis/bot/v2/hook/f129a3a4-9860-4917-9b14-5e63f9bf8e98")
 
-    send_email(sender_email, sender_password, receivers, message)
+    try:
+        send_email(sender_email, sender_password, receivers, message)
+        log_push_event_csv(subject, receivers)
+
+        bot.send_card_message(
+            content=f"祝您有美好的一天~✅",
+            title=f"✅ {subject} 已成功推送",
+            tag_text="成功",
+            tag_color="green",
+            template_color="green"  # 标题栏为绿色背景
+        )
+    except Exception as e:
+        # print("邮件发送失败：", e)
+        log_push_event_csv(subject, receivers, error_message=str(e))
+        bot.send_card_message(
+            content=f"{subject}的推送出现错误。\n程序运行报错：\n```{str(e)}```",
+            title="🚨 报错警告",
+            tag_text="错误",
+            tag_color="red",
+            template_color = "red"
+        )
