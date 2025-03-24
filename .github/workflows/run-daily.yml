@@ -54,6 +54,11 @@ jobs:
               https://open.feishu.cn/open-apis/bot/v2/hook/f129a3a4-9860-4917-9b14-5e63f9bf8e98
           fi
         continue-on-error: true
+        
+      - name: List changed files before commit
+        run: |
+          echo "🗂️ 当前更改文件如下："
+          git status
 
       - name: Commit and Push Generated Files
         run: |
