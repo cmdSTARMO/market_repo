@@ -445,7 +445,7 @@ if __name__ == "__main__":
     subject = generate_subject()
 
     message = create_email_content(mail_msg, subject, sender_nickname, sender_email, receiver_nickname, receiver_email)
-    receivers = ['1624070280@qq.com'] #, 'heli2002@163.com', 'xin.jackhuang@gmail.com', 'huangdapao@huangdapao.com' , '2248362474@qq.com', '344621206@qq.com', '484420009@qq.com', '980364480@qq.com', '1097442370@qq.com', 'solid_b1n@qq.com', "944240869@qq.com", '2366965809@qq.com']  # 可以包含多个接收者邮箱地址 'solid_b1n@qq.com', "yfchan484420009@163.com", "944240869@qq.com"
+    receivers = ['1624070280@qq.com', 'heli2002@163.com', 'xin.jackhuang@gmail.com', 'huangdapao@huangdapao.com' , '2248362474@qq.com', '344621206@qq.com', '484420009@qq.com', '980364480@qq.com', '1097442370@qq.com', 'solid_b1n@qq.com', "944240869@qq.com", '2366965809@qq.com', '675677537@qq.com']  # 可以包含多个接收者邮箱地址 'solid_b1n@qq.com', "yfchan484420009@163.com", "944240869@qq.com"
     bot = FeishuBot("https://open.feishu.cn/open-apis/bot/v2/hook/f129a3a4-9860-4917-9b14-5e63f9bf8e98")
 
     try:
